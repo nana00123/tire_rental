@@ -1,0 +1,345 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif; }
+.phone-wrap { display: flex; justify-content: center; align-items: flex-start; padding: 24px 0; }
+.phone { width: 375px; height: 720px; background: #f5f5f7; border-radius: 44px; border: 8px solid #1a1a2e; position: relative; overflow: hidden; box-shadow: 0 0 0 1px #333; }
+.phone-screen { width: 100%; height: 100%; overflow: hidden; position: relative; background: #f0f0f3; }
+.status-bar { height: 44px; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 12px; font-weight: 500; }
+.page-content { height: calc(100% - 44px); overflow-y: auto; background: #f0f0f3; padding-bottom: 100px; }
+.product-card { margin: 12px; background: #fff; border-radius: 16px; overflow: hidden; border: 0.5px solid #e0e0e0; }
+.product-img-area { background: linear-gradient(135deg, #f8f4ff 0%, #ede8ff 100%); padding: 20px; text-align: center; position: relative; }
+.brand-badge { font-size: 10px; font-weight: 600; color: #7B2D8B; background: #fff; border: 1px solid #7B2D8B; border-radius: 20px; padding: 2px 8px; display: inline-block; margin-bottom: 6px; }
+.product-title { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+.product-title span { background: #7B2D8B; color: #fff; border-radius: 20px; padding: 2px 10px; font-size: 14px; margin: 0 4px; }
+.benefit-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 12px; }
+.benefit-card { background: #fff; border-radius: 12px; padding: 10px 8px; border: 0.5px solid #eee; text-align: center; }
+.benefit-icon { width: 36px; height: 36px; border-radius: 50%; background: #f0ebff; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; }
+.benefit-tag { font-size: 8px; color: #7B2D8B; font-weight: 600; margin-bottom: 4px; }
+.benefit-title { font-size: 9px; font-weight: 700; color: #1a1a2e; line-height: 1.4; }
+.benefit-desc { font-size: 7.5px; color: #888; margin-top: 3px; line-height: 1.4; }
+.page-notice { padding: 8px 16px; font-size: 10px; color: #666; line-height: 1.6; }
+
+.float-btn { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: #7B2D8B; color: #fff; border: none; border-radius: 28px; padding: 14px 32px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(123,45,139,0.4); z-index: 10; transition: all 0.2s; }
+.float-btn:active { transform: translateX(-50%) scale(0.97); }
+.float-close { position: absolute; top: -10px; right: -10px; width: 22px; height: 22px; background: rgba(0,0,0,0.5); border-radius: 50%; border: none; color: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+.dim { position: absolute; inset: 0; background: rgba(0,0,0,0); z-index: 20; pointer-events: none; transition: background 0.35s; }
+.dim.active { background: rgba(0,0,0,0.45); pointer-events: auto; }
+
+.bottom-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 24px 24px 0 0; z-index: 30; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32,0.72,0,1); max-height: 88%; overflow: hidden; display: flex; flex-direction: column; }
+.bottom-sheet.open { transform: translateY(0); }
+.bs-handle { width: 36px; height: 4px; background: #e0e0e0; border-radius: 2px; margin: 10px auto 4px; flex-shrink: 0; }
+.bs-header { padding: 4px 16px 10px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid #f0f0f0; flex-shrink: 0; }
+.bs-title { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+.bs-close { width: 28px; height: 28px; border-radius: 50%; border: none; background: #f5f5f5; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #666; }
+
+.bs-body { overflow-y: auto; flex: 1; }
+.bs-banner { background: linear-gradient(135deg, #faf7ff 0%, #f0ebff 100%); padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+.nexen-logo { font-size: 9px; font-weight: 800; color: #7B2D8B; border: 1.5px solid #7B2D8B; border-radius: 4px; padding: 1px 4px; letter-spacing: 0.5px; }
+.bs-brand-title { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.bs-brand-title span { color: #7B2D8B; }
+.bs-benefits { display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px; scrollbar-width: none; flex-shrink: 0; }
+.bs-benefits::-webkit-scrollbar { display: none; }
+.bs-benefit-chip { background: #f8f4ff; border: 0.5px solid #d4b8e8; border-radius: 20px; padding: 5px 10px; white-space: nowrap; font-size: 9px; color: #7B2D8B; font-weight: 600; flex-shrink: 0; }
+.bs-notice { margin: 0 16px 10px; padding: 8px 10px; background: #f9f9f9; border-radius: 8px; font-size: 9px; color: #888; line-height: 1.6; }
+
+.login-nudge { margin: 0 16px 10px; padding: 8px 12px; background: #f8f4ff; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; }
+.login-nudge-text { font-size: 10px; color: #7B2D8B; }
+.login-nudge-btn { font-size: 10px; font-weight: 700; color: #7B2D8B; background: #fff; border: 1px solid #7B2D8B; border-radius: 14px; padding: 4px 10px; cursor: pointer; }
+
+.form-section { padding: 0 16px; }
+.form-label { font-size: 11px; font-weight: 700; color: #1a1a2e; margin-bottom: 5px; }
+.form-label span { color: #7B2D8B; }
+.form-input { width: 100%; height: 42px; border: 1px solid #e0e0e0; border-radius: 10px; padding: 0 12px; font-size: 13px; color: #1a1a2e; background: #fff; outline: none; margin-bottom: 10px; transition: border 0.2s; }
+.form-input:focus { border-color: #7B2D8B; }
+.form-input.error { border-color: #e53935; }
+.error-msg { font-size: 10px; color: #e53935; margin-top: -8px; margin-bottom: 8px; display: none; }
+.form-input.error + .error-msg { display: block; }
+.phone-auth-btn { width: 100%; height: 44px; background: #1a1a2e; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s; }
+.phone-auth-btn.authed { background: #eee; color: #666; }
+
+.consent-section { padding: 0 16px 8px; }
+.consent-item { border: 0.5px solid #e8e8e8; border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+.consent-header { padding: 11px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: #fff; }
+.consent-label { font-size: 11px; color: #1a1a2e; display: flex; align-items: center; gap: 6px; }
+.consent-label span { color: #7B2D8B; font-weight: 600; }
+.consent-toggle { font-size: 12px; color: #888; transition: transform 0.25s; }
+.consent-toggle.open { transform: rotate(180deg); }
+.consent-body { background: #fafafa; border-top: 0.5px solid #f0f0f0; font-size: 9.5px; color: #555; line-height: 1.7; padding: 10px 12px; display: none; }
+.consent-body.open { display: block; }
+.consent-body table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.consent-body td { border: 0.5px solid #ddd; padding: 4px 6px; font-size: 9px; }
+.consent-body th { border: 0.5px solid #ddd; padding: 4px 6px; font-size: 9px; background: #f0f0f0; font-weight: 600; }
+.consent-check-row { padding: 8px 12px; background: #fff; border-top: 0.5px solid #f0f0f0; display: flex; align-items: center; gap: 6px; }
+.consent-checkbox { width: 16px; height: 16px; accent-color: #7B2D8B; cursor: pointer; }
+.consent-check-label { font-size: 10px; color: #333; }
+
+.bs-footer { padding: 12px 16px 16px; background: #fff; border-top: 0.5px solid #f0f0f0; flex-shrink: 0; }
+.cta-btn { width: 100%; height: 50px; border-radius: 14px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.cta-btn.disabled { background: #e8e8e8; color: #aaa; pointer-events: none; }
+.cta-btn.enabled { background: #7B2D8B; color: #fff; }
+.cta-btn.enabled:active { transform: scale(0.98); }
+
+.success-overlay { position: absolute; inset: 0; background: #fff; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32,0.72,0,1); padding: 24px; }
+.success-overlay.show { transform: translateY(0); }
+.success-icon { width: 64px; height: 64px; background: #f0ebff; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.success-icon svg { width: 32px; height: 32px; }
+.success-title { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+.success-sub { font-size: 12px; color: #888; text-align: center; line-height: 1.7; }
+.receipt-card { width: 100%; background: #faf8ff; border: 0.5px solid #d4b8e8; border-radius: 12px; padding: 12px 16px; }
+.receipt-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; }
+.receipt-row .lbl { color: #888; }
+.receipt-row .val { color: #1a1a2e; font-weight: 500; }
+.receipt-num { font-size: 16px; font-weight: 700; color: #7B2D8B; text-align: center; padding: 6px 0; }
+.ok-btn { width: 100%; height: 48px; background: #7B2D8B; color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+</style>
+
+<h2 class="sr-only">에누리 타이어 렌탈 상담 신청 - 모바일 바텀시트 프로토타입</h2>
+<div class="phone-wrap">
+<div class="phone">
+<div class="phone-screen">
+
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>●●●</span>
+  </div>
+
+  <div class="page-content" id="pageContent">
+    <div class="product-card">
+      <div class="product-img-area">
+        <div class="brand-badge">NEXEN</div>
+        <div class="product-title">에누리 타이어 <span>렌탈</span> 서비스</div>
+        <div style="margin-top:8px;">
+          <svg width="80" height="50" viewBox="0 0 80 50"><ellipse cx="40" cy="25" rx="28" ry="22" fill="#1a1a2e" opacity="0.12"/><ellipse cx="40" cy="25" rx="22" ry="17" fill="#fff" stroke="#1a1a2e" stroke-width="1.5"/><ellipse cx="40" cy="25" rx="10" ry="8" fill="#7B2D8B" opacity="0.3"/><circle cx="40" cy="25" r="4" fill="#1a1a2e"/></svg>
+        </div>
+      </div>
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <div class="benefit-tag">가벼운 시작</div>
+          <div class="benefit-title">초기 비용 0원, 월 만원대 시작!</div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-tag">100% 무상 교체</div>
+          <div class="benefit-title">주행 중 파손도 무상 교체</div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-tag">반납 부담 제로</div>
+          <div class="benefit-title">계약 후 타이어 반납 없이 이용</div>
+        </div>
+      </div>
+    </div>
+    <div class="page-notice">
+      상담은 무료이며, 계약 확정이 아닙니다.<br>
+      신청 후 3시간 이내(영업일 기준) 해피콜을 통해 월 렌탈료를 확인하실 수 있습니다.
+    </div>
+    <div style="padding: 12px 16px; font-size: 11px; color: #aaa; text-align: center; line-height: 1.8;">
+      관심 상품을 선택하고<br>렌탈 상담을 신청해보세요
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(to top,#f0f0f3 60%,transparent);z-index:9;pointer-events:none;"></div>
+
+  <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;">
+    <button class="float-btn" id="floatBtn" onclick="openSheet()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.18 2 2 0 012 .01h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+      타이어 렌탈 상담
+      <button class="float-close" onclick="closeFloat(event)">✕</button>
+    </button>
+  </div>
+
+  <div class="dim" id="dim" onclick="closeSheet()"></div>
+
+  <div class="bottom-sheet" id="bottomSheet">
+    <div class="bs-handle" id="bsHandle"></div>
+    <div class="bs-header">
+      <div class="bs-title">에누리 타이어 렌탈 서비스</div>
+      <button class="bs-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="bs-body">
+      <div class="bs-banner">
+        <div>
+          <div style="font-size:9px;color:#888;margin-bottom:2px;"><span class="nexen-logo">NEXEN</span> 와 함께하는</div>
+          <div class="bs-brand-title">에누리 타이어 <span>렌탈</span> 서비스</div>
+        </div>
+      </div>
+      <div class="bs-benefits">
+        <div class="bs-benefit-chip">초기비용 0원</div>
+        <div class="bs-benefit-chip">월 만원대 시작</div>
+        <div class="bs-benefit-chip">100% 무상교체</div>
+        <div class="bs-benefit-chip">반납 부담 제로</div>
+      </div>
+      <div class="bs-notice">
+        상담은 무료이며, 계약 확정이 아닙니다.<br>신청 후 3시간 이내(영업일 기준) 해피콜을 통해 월 렌탈료를 확인하실 수 있습니다.
+      </div>
+
+      <div class="login-nudge">
+        <span class="login-nudge-text">로그인하고 신청하면 추가 혜택 제공</span>
+        <button class="login-nudge-btn">로그인 &gt;</button>
+      </div>
+
+      <div class="form-section">
+        <div style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:10px;">신청정보</div>
+        <div class="form-label">이름 <span>(필수)</span></div>
+        <input class="form-input" id="nameInput" type="text" placeholder="이름을 입력해주세요" oninput="checkForm()">
+        <div class="error-msg" id="nameError">이름을 입력해 주세요</div>
+        <div class="form-label">휴대폰번호 <span>(필수)</span></div>
+        <button class="phone-auth-btn" id="authBtn" onclick="doAuth()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <span id="authBtnText">휴대폰 인증하기</span>
+        </button>
+        <div class="form-label">E-mail <span>(필수)</span></div>
+        <input class="form-input" id="emailInput" type="email" placeholder="이메일을 입력해주세요" oninput="checkForm()">
+        <div class="error-msg" id="emailError">올바른 이메일 형식으로 입력해 주세요</div>
+      </div>
+
+      <div class="consent-section">
+        <div class="consent-item">
+          <div class="consent-header" onclick="toggleConsent(0)">
+            <div class="consent-label">
+              개인정보 수집/이용 동의 <span>(필수)</span>
+            </div>
+            <span class="consent-toggle" id="ct0">∧</span>
+          </div>
+          <div class="consent-body open" id="cb0">
+            <div><b>1. 목적:</b> 상담 접수 및 고객 응대</div>
+            <div><b>2. 항목:</b> 이름, 휴대폰번호</div>
+            <div><b>3. 보유기간:</b> <u>3개월</u></div>
+            <div style="color:#e53935;margin-top:4px;font-size:8.5px;">* 개인정보 수집 및 이용에 대해 거부할 수 있으며, 거부할 경우 타이어 렌탈 상담 신청이 제한될 수 있습니다.</div>
+          </div>
+          <div class="consent-check-row">
+            <input type="checkbox" class="consent-checkbox" id="chk0" onchange="checkForm()">
+            <label class="consent-check-label" for="chk0">개인정보 수집 및 이용에 동의합니다.</label>
+          </div>
+        </div>
+        <div class="consent-item">
+          <div class="consent-header" onclick="toggleConsent(1)">
+            <div class="consent-label">
+              개인정보 제3자 제공 동의 <span>(필수)</span>
+            </div>
+            <span class="consent-toggle" id="ct1">∨</span>
+          </div>
+          <div class="consent-body" id="cb1">
+            <div><b>제공받는 자:</b> (주)넥센타이어</div>
+            <table style="margin-top:6px;">
+              <tr><th>수집이용 목적</th><th>수집항목</th><th>보유기간</th></tr>
+              <tr><td>상담 접수 및 고객응대</td><td>이름, 휴대폰번호</td><td>3개월</td></tr>
+            </table>
+            <div style="color:#e53935;margin-top:6px;font-size:8.5px;">* 개인정보 수집 및 이용에 대해 거부할 수 있으며, 거부할 경우 타이어 렌탈 상담 신청이 제한될 수 있습니다.</div>
+          </div>
+          <div class="consent-check-row">
+            <input type="checkbox" class="consent-checkbox" id="chk1" onchange="checkForm()">
+            <label class="consent-check-label" for="chk1">개인정보 제3자 제공에 동의합니다.</label>
+          </div>
+        </div>
+      </div>
+      <div style="height:80px;"></div>
+    </div>
+
+    <div class="bs-footer">
+      <button class="cta-btn disabled" id="ctaBtn" onclick="submitForm()">무료 상담 예약</button>
+    </div>
+  </div>
+
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-icon">
+      <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#7B2D8B" opacity="0.15"/><path d="M9 16.5l5 5 9-9" stroke="#7B2D8B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="success-title">상담 신청 완료!</div>
+    <div class="success-sub">신청 후 3시간 이내(영업일 기준)<br>해피콜을 통해 연락드리겠습니다.</div>
+    <div class="receipt-card">
+      <div class="receipt-num" id="receiptNum">#20240408-00042</div>
+      <div class="receipt-row"><span class="lbl">신청상품</span><span class="val">에누리 타이어 렌탈</span></div>
+      <div class="receipt-row"><span class="lbl">이메일 알림</span><span class="val" id="receiptEmail">-</span></div>
+      <div class="receipt-row"><span class="lbl">신청일시</span><span class="val" id="receiptDate">-</span></div>
+    </div>
+    <button class="ok-btn" onclick="resetAll()">확인</button>
+  </div>
+
+</div>
+</div>
+</div>
+
+<script>
+let authed = false;
+let floatClosed = false;
+
+function openSheet() {
+  document.getElementById('dim').classList.add('active');
+  document.getElementById('bottomSheet').classList.add('open');
+}
+function closeSheet() {
+  document.getElementById('dim').classList.remove('active');
+  document.getElementById('bottomSheet').classList.remove('open');
+}
+function closeFloat(e) {
+  e.stopPropagation();
+  document.getElementById('floatBtn').style.display = 'none';
+}
+
+function toggleConsent(idx) {
+  const body = document.getElementById('cb' + idx);
+  const toggle = document.getElementById('ct' + idx);
+  body.classList.toggle('open');
+  toggle.textContent = body.classList.contains('open') ? '∧' : '∨';
+}
+
+function doAuth() {
+  if (authed) return;
+  const btn = document.getElementById('authBtn');
+  const txt = document.getElementById('authBtnText');
+  btn.style.background = '#7B2D8B';
+  txt.textContent = '인증 중...';
+  setTimeout(() => {
+    authed = true;
+    btn.classList.add('authed');
+    btn.style.background = '';
+    txt.textContent = '✓  인증 완료';
+    checkForm();
+  }, 1200);
+}
+
+function checkForm() {
+  const name = document.getElementById('nameInput').value.trim();
+  const email = document.getElementById('emailInput').value.trim();
+  const chk0 = document.getElementById('chk0').checked;
+  const chk1 = document.getElementById('chk1').checked;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const ok = name.length >= 2 && authed && emailValid && chk0 && chk1;
+  const btn = document.getElementById('ctaBtn');
+  btn.className = 'cta-btn ' + (ok ? 'enabled' : 'disabled');
+}
+
+function submitForm() {
+  const btn = document.getElementById('ctaBtn');
+  if (!btn.classList.contains('enabled')) return;
+  const email = document.getElementById('emailInput').value;
+  const now = new Date();
+  document.getElementById('receiptEmail').textContent = email;
+  document.getElementById('receiptDate').textContent = now.toLocaleDateString('ko-KR') + ' ' + now.toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('receiptNum').textContent = '#' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(Math.floor(Math.random()*99999)).padStart(5,'0');
+  document.getElementById('successOverlay').classList.add('show');
+}
+
+function resetAll() {
+  document.getElementById('successOverlay').classList.remove('show');
+  document.getElementById('bottomSheet').classList.remove('open');
+  document.getElementById('dim').classList.remove('active');
+  document.getElementById('nameInput').value = '';
+  document.getElementById('emailInput').value = '';
+  document.getElementById('chk0').checked = false;
+  document.getElementById('chk1').checked = false;
+  document.getElementById('authBtnText').textContent = '휴대폰 인증하기';
+  document.getElementById('authBtn').classList.remove('authed');
+  authed = false;
+  document.getElementById('ctaBtn').className = 'cta-btn disabled';
+  document.getElementById('floatBtn').style.display = '';
+}
+
+let startY = 0;
+const handle = document.getElementById('bsHandle');
+handle.addEventListener('touchstart', e => { startY = e.touches[0].clientY; });
+handle.addEventListener('touchend', e => {
+  if (e.changedTouches[0].clientY - startY > 60) closeSheet();
+});
+</script>
