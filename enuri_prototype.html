@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>enuri — AI 쇼핑에이전트 프로토타입</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#111827;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 48px;gap:16px;}
+
+  /* NAV */
+  .nav{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;}
+  .nav-btn{padding:6px 16px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid;transition:all .15s;letter-spacing:-.01em;}
+  .nav-btn.on{background:#1d6fce;color:#fff;border-color:#1d6fce;}
+  .nav-btn:not(.on){background:rgba(255,255,255,.07);color:rgba(255,255,255,.45);border-color:rgba(255,255,255,.12);}
+
+  /* PHONE */
+  .phone-wrap{position:relative;width:360px;}
+  .phone{width:360px;background:#fff;border-radius:40px;border:2px solid rgba(255,255,255,.15);overflow:hidden;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+
+  /* STATUS BAR */
+  .sbar{background:#fff;padding:11px 20px 5px;display:flex;justify-content:space-between;align-items:center;}
+  .stime{font-size:12px;font-weight:700;color:#111;}
+
+  /* TOP BAR */
+  .tbar{background:#fff;border-bottom:1px solid #e9ecef;padding:9px 15px 10px;display:flex;align-items:center;justify-content:space-between;}
+  .tlogo{font-size:15px;font-weight:700;color:#1d6fce;letter-spacing:-.03em;}
+  .tico{width:32px;height:32px;border-radius:50%;background:#f1f3f5;display:flex;align-items:center;justify-content:center;}
+
+  /* CATEGORY */
+  .cats{display:flex;gap:6px;padding:8px 14px;background:#fff;border-bottom:1px solid #e9ecef;overflow-x:auto;}
+  .cats::-webkit-scrollbar{display:none;}
+  .cpill{flex-shrink:0;font-size:11px;padding:4px 12px;border-radius:999px;border:1px solid #dee2e6;color:#6c757d;white-space:nowrap;cursor:pointer;font-weight:500;}
+  .cpill.on{background:#1d6fce;color:#fff;border-color:#1d6fce;}
+
+  /* FILTER BAR */
+  .fbar{display:flex;gap:5px;padding:7px 14px;background:#fff;border-bottom:1px solid #e9ecef;align-items:center;overflow-x:auto;flex-wrap:wrap;}
+  .fbar::-webkit-scrollbar{display:none;}
+  .ftrig{display:flex;align-items:center;gap:4px;height:26px;padding:0 10px;border-radius:7px;border:1px solid #4dabf7;background:#e7f5ff;font-size:11px;color:#1971c2;flex-shrink:0;cursor:pointer;font-weight:600;}
+  .fchip{flex-shrink:0;display:inline-flex;align-items:center;gap:3px;height:24px;padding:0 9px;border-radius:999px;font-size:11px;border:1px solid;font-weight:500;cursor:pointer;}
+  .fc-pos{background:#e7f5ff;color:#1864ab;border-color:#74c0fc;}
+  .fc-exc{background:#fff0f6;color:#a61e4d;border-color:#f783ac;}
+
+  /* RESULT ROW */
+  .res-row{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;}
+  .res-n{font-size:13px;font-weight:700;color:#212529;}
+  .res-s{font-size:11px;color:#868e96;}
+
+  /* PRODUCT GRID */
+  .pgrid{padding:8px 12px 12px;background:#f8f9fa;display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .pc{background:#fff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s;}
+  .pc:hover{border-color:#74c0fc;}
+  .pc-img{aspect-ratio:1;background:#f1f3f5;display:flex;align-items:center;justify-content:center;font-size:26px;position:relative;}
+  .pbadge{position:absolute;top:5px;left:5px;font-size:9px;padding:2px 6px;border-radius:999px;background:#e7f5ff;color:#1864ab;font-weight:700;}
+  .pc-b{padding:8px 9px 10px;}
+  .pc-brand{font-size:10px;color:#868e96;margin-bottom:1px;}
+  .pc-name{font-size:12px;font-weight:600;color:#212529;margin-bottom:4px;line-height:1.3;}
+  .pc-price{font-size:12px;font-weight:700;color:#212529;margin-bottom:5px;}
+  .pc-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px;}
+  .pt{font-size:9px;padding:2px 6px;border-radius:999px;font-weight:600;}
+  .pt-b{background:#e7f5ff;color:#1864ab;}
+  .pt-g{background:#f1f3f5;color:#495057;}
+  .pc-stars{font-size:10px;color:#f59f00;}
+  .pc-cnt{font-size:10px;color:#868e96;}
+
+  /* BOTTOM NAV */
+  .bnav{background:#fff;border-top:1px solid #e9ecef;padding:9px 0 20px;display:flex;justify-content:space-around;}
+  .bni{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
+  .bni-l{font-size:10px;color:#868e96;font-weight:500;}
+  .bni-l.on{color:#1d6fce;font-weight:700;}
+
+  /* AGENT BANNER */
+  .ag-banner{margin:9px 12px;border-radius:12px;border:1.5px solid #4dabf7;background:#e7f5ff;padding:11px 13px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:background .12s;}
+  .ag-banner:hover{background:#d0ebff;}
+  .ag-icon{width:34px;height:34px;border-radius:50%;background:#1d6fce;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ag-txt{flex:1;min-width:0;}
+  .ag-t{font-size:11px;font-weight:700;color:#1864ab;margin-bottom:2px;}
+  .ag-d{font-size:10px;color:#1971c2;font-style:italic;}
+  .ag-arr{width:24px;height:24px;border-radius:50%;background:#1d6fce;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+  /* SWIPE CARDS */
+  .q-section{padding:0 12px 4px;}
+  .q-lbl{font-size:10px;color:#868e96;margin-bottom:6px;}
+  .q-scroll{display:flex;gap:7px;overflow-x:auto;scroll-snap-type:x mandatory;}
+  .q-scroll::-webkit-scrollbar{display:none;}
+  .qcard{flex-shrink:0;width:135px;border:1px solid #a5d8ff;border-radius:12px;padding:10px 11px;background:#fff;cursor:pointer;scroll-snap-align:start;transition:all .12s;}
+  .qcard:hover{background:#e7f5ff;border-color:#4dabf7;}
+  .qcard-ico{font-size:18px;margin-bottom:5px;display:block;}
+  .qcard-txt{font-size:11px;color:#212529;line-height:1.45;font-weight:500;}
+  .q-arr{display:flex;justify-content:flex-end;margin-top:6px;}
+  .q-dots{display:flex;justify-content:center;gap:4px;padding:8px 0 2px;}
+  .qdot{height:5px;border-radius:999px;background:#dee2e6;transition:all .2s;}
+  .qdot.on{width:14px;background:#1d6fce;}
+  .qdot:not(.on){width:5px;}
+
+  /* FLOAT BTN */
+  .float-wrap{display:flex;justify-content:flex-end;padding:8px 12px 2px;}
+  .float-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:999px;background:#1d6fce;cursor:pointer;transition:opacity .12s;}
+  .float-btn:hover{opacity:.88;}
+  .float-dot{width:7px;height:7px;border-radius:50%;background:#40c057;}
+
+  /* CHAT */
+  .ctx-bar{background:#e7f5ff;padding:8px 14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-bottom:1px solid #d0ebff;}
+  .ctx-lbl{font-size:10px;color:#1864ab;font-weight:600;}
+  .ctx-tag{font-size:10px;padding:2px 8px;border-radius:999px;background:#1d6fce;color:#fff;font-weight:600;}
+  .chat-bg{background:#f8f9fa;padding:12px 13px 0;display:flex;flex-direction:column;gap:11px;}
+  .msg-row{display:flex;gap:8px;align-items:flex-end;}
+  .msg-row.u{flex-direction:row-reverse;}
+  .av{width:28px;height:28px;border-radius:50%;background:#e7f5ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .bbl{max-width:220px;padding:9px 12px;border-radius:14px;font-size:11px;line-height:1.55;font-weight:500;}
+  .bbl.bot{background:#fff;border:1px solid #e9ecef;border-bottom-left-radius:3px;color:#212529;}
+  .bbl.usr{background:#1d6fce;color:#fff;border-bottom-right-radius:3px;}
+  .tag-bbl{background:#fff;border:1px solid #e9ecef;border-radius:14px;border-bottom-left-radius:3px;padding:10px 12px;max-width:240px;}
+  .tag-bbl-lbl{font-size:10px;color:#868e96;margin-bottom:7px;font-weight:500;}
+  .ttags{display:flex;flex-wrap:wrap;gap:5px;}
+  .tt{display:inline-flex;align-items:center;gap:3px;padding:5px 10px;border-radius:999px;font-size:11px;border:1px solid;cursor:pointer;transition:all .12s;font-weight:500;}
+  .tt-sel{background:#1d6fce;color:#fff;border-color:#1d6fce;}
+  .tt-exc{background:#fff0f6;color:#a61e4d;border-color:#f783ac;}
+  .tt:not(.tt-sel):not(.tt-exc){background:#f1f3f5;color:#495057;border-color:#dee2e6;}
+
+  /* RECOMMEND CARDS */
+  .rec-wrap{max-width:240px;}
+  .rec-lbl{font-size:10px;color:#868e96;margin-bottom:5px;font-weight:600;}
+  .rcard{background:#fff;border:1px solid #e9ecef;border-radius:12px;padding:10px;display:flex;gap:9px;align-items:center;margin-bottom:7px;cursor:pointer;transition:border-color .12s;}
+  .rcard:hover{border-color:#74c0fc;}
+  .rcard.hl{border:2px solid #4dabf7;}
+  .rcard-img{width:40px;height:40px;border-radius:8px;background:#f1f3f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;}
+  .rcard-info{flex:1;min-width:0;}
+  .ri-brand{font-size:10px;color:#868e96;}
+  .ri-name{font-size:11px;font-weight:700;color:#212529;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ri-price{font-size:11px;color:#212529;font-weight:600;}
+  .ri-tags{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap;}
+  .ri-t{font-size:9px;padding:1px 6px;border-radius:999px;background:#e7f5ff;color:#1864ab;font-weight:600;}
+  .rank{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700;flex-shrink:0;}
+  .rank-1{background:#1d6fce;color:#fff;}
+  .rank-2{background:#f1f3f5;color:#495057;}
+  .rank-3{background:#f1f3f5;color:#495057;}
+
+  /* FOLLOW-UP CHIPS */
+  .fups{display:flex;flex-wrap:wrap;gap:5px;padding:9px 13px;}
+  .fup{font-size:11px;padding:6px 12px;border-radius:999px;border:1px solid #4dabf7;background:#e7f5ff;color:#1864ab;cursor:pointer;white-space:nowrap;font-weight:600;transition:background .12s;}
+  .fup:hover{background:#d0ebff;}
+
+  /* INPUT BAR */
+  .inp-bar{background:#fff;border-top:1px solid #e9ecef;padding:10px 13px 22px;display:flex;gap:8px;align-items:center;}
+  .inp-f{flex:1;height:36px;border-radius:999px;background:#f1f3f5;border:1px solid #dee2e6;display:flex;align-items:center;padding:0 14px;}
+  .inp-ph{font-size:11px;color:#adb5bd;font-weight:500;}
+  .inp-send{width:34px;height:34px;border-radius:50%;background:#1d6fce;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
+
+  /* FILTER SHEET */
+  .overlay{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);border-radius:38px;z-index:20;align-items:flex-end;}
+  .overlay.on{display:flex;}
+  .sheet{background:#fff;border-radius:22px 22px 0 0;width:100%;padding-bottom:26px;max-height:88%;}
+  .sheet-handle{width:38px;height:4px;border-radius:999px;background:#dee2e6;margin:11px auto 14px;}
+  .sheet-header{padding:0 17px 11px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f3f5;}
+  .sheet-title{font-size:15px;font-weight:700;color:#212529;}
+  .sheet-reset{font-size:12px;color:#868e96;text-decoration:underline;cursor:pointer;font-weight:500;}
+  .legend-row{display:flex;gap:12px;padding:10px 17px 5px;}
+  .leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#495057;font-weight:500;}
+  .leg-dot{width:8px;height:8px;border-radius:50%;}
+  .sheet-sec{padding:9px 17px 5px;}
+  .sheet-sec-label{font-size:10px;font-weight:700;color:#868e96;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;}
+  .stags{display:flex;flex-wrap:wrap;gap:6px;}
+  .stag{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:999px;border:1px solid #dee2e6;background:#fff;font-size:12px;color:#495057;cursor:pointer;transition:all .12s;font-weight:500;}
+  .stag .sd{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .stag.on-pos{background:#e7f5ff;color:#1864ab;border-color:#74c0fc;}
+  .stag.on-exc{background:#fff0f6;color:#a61e4d;border-color:#f783ac;}
+  .stag.on-neu{background:#ebfbee;color:#1a5c2c;border-color:#8ce99a;}
+  .sheet-div{height:1px;background:#f1f3f5;margin:8px 17px;}
+  .apply-btn{margin:14px 17px 0;height:48px;border-radius:14px;background:#1d6fce;border:none;font-size:15px;font-weight:700;color:#fff;cursor:pointer;width:calc(100% - 34px);display:flex;align-items:center;justify-content:center;transition:opacity .12s;}
+  .apply-btn:hover{opacity:.9;}
+
+  .hint{font-size:11px;color:rgba(255,255,255,.3);text-align:center;font-weight:500;}
+</style>
+</head>
+<body>
+
+<div class="nav" id="nav">
+  <div class="nav-btn on" onclick="go(1)" id="nb1">① 리스트</div>
+  <div class="nav-btn" onclick="go(2)" id="nb2">② 에이전트 진입</div>
+  <div class="nav-btn" onclick="go(3)" id="nb3">③ 에이전트 대화</div>
+</div>
+
+<div class="phone-wrap">
+  <div class="phone">
+
+    <!-- SCREEN 1 -->
+    <div class="screen on" id="s1">
+      <div class="sbar">
+        <span class="stime">9:41</span>
+        <div style="display:flex;gap:5px;align-items:center;">
+          <svg width="15" height="11" viewBox="0 0 16 11" fill="none"><rect x="0" y="4" width="3" height="7" rx="1" fill="#212529"/><rect x="4.5" y="2.5" width="3" height="8.5" rx="1" fill="#212529"/><rect x="9" y="0.5" width="3" height="10.5" rx="1" fill="#212529"/></svg>
+          <svg width="24" height="11" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#868e96" stroke-width=".8"/><rect x="22.5" y="3.5" width="2" height="5" rx="1" fill="#868e96"/><rect x="2" y="2" width="16" height="8" rx="2" fill="#212529"/></svg>
+        </div>
+      </div>
+      <div class="tbar">
+        <span class="tlogo">enuri</span>
+        <div style="display:flex;gap:7px;">
+          <div class="tico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="#495057" stroke-width="1.3"/><path d="M10 10l3 3" stroke="#495057" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+          <div class="tico" style="position:relative;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 2h10l1 3-4 4v5l-4-2V9L2 5z" stroke="#495057" stroke-width="1.1"/></svg><span style="position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:#4dabf7;border:1.5px solid #fff;"></span></div>
+        </div>
+      </div>
+      <div class="cats">
+        <div class="cpill on">전체</div><div class="cpill">세럼/앰플</div><div class="cpill">토너</div><div class="cpill">크림</div><div class="cpill">선케어</div><div class="cpill">클렌징</div>
+      </div>
+      <div class="fbar">
+        <div class="ftrig" onclick="openSheet()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 2h10M3 5.5h6M5 9h2" stroke="#1971c2" stroke-width="1.2" stroke-linecap="round"/></svg>
+          필터 <span id="fc1">2</span>
+        </div>
+        <div id="chips1" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+      </div>
+      <div style="background:#f8f9fa;">
+        <div class="ag-banner" onclick="go(2)">
+          <div class="ag-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.8" stroke="#fff" stroke-width="1.2"/><path d="M2 14c0-2.8 2.7-5 6-5s6 2.2 6 5" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><circle cx="12.5" cy="3.5" r="2" fill="#40c057"/></svg></div>
+          <div class="ag-txt"><div class="ag-t">AI 쇼핑에이전트에게 물어보세요</div><div class="ag-d">"복합성 피부에 산뜻한 세럼 추천해줘"</div></div>
+          <div class="ag-arr"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="res-row"><div><span class="res-n" id="rc1">612</span><span class="res-s"> 개 상품</span></div><span style="font-size:11px;color:#868e96;font-weight:500;">리뷰 많은순 ▾</span></div>
+        <div class="pgrid">
+          <div class="pc"><div class="pc-img">🌿<span class="pbadge">베스트</span></div><div class="pc-b"><div class="pc-brand">이니스프리</div><div class="pc-name">그린티 씨드 세럼</div><div class="pc-price">28,000원</div><div class="pc-tags"><span class="pt pt-b">흡수력 좋음</span><span class="pt pt-b">자극 없음</span></div><div style="display:flex;align-items:center;gap:2px;"><span class="pc-stars">★★★★★</span><span class="pc-cnt">(3,241)</span></div></div></div>
+          <div class="pc"><div class="pc-img">💧<span class="pbadge">베스트</span></div><div class="pc-b"><div class="pc-brand">라네즈</div><div class="pc-name">워터뱅크 세럼</div><div class="pc-price">45,000원</div><div class="pc-tags"><span class="pt pt-b">촉촉함 유지</span><span class="pt pt-g">복합성</span></div><div style="display:flex;align-items:center;gap:2px;"><span class="pc-stars">★★★★★</span><span class="pc-cnt">(2,188)</span></div></div></div>
+          <div class="pc"><div class="pc-img">🫧<span class="pbadge">베스트</span></div><div class="pc-b"><div class="pc-brand">토리든</div><div class="pc-name">다이브인 세럼</div><div class="pc-price">19,800원</div><div class="pc-tags"><span class="pt pt-b">흡수력 좋음</span><span class="pt pt-g">소량 충분</span></div><div style="display:flex;align-items:center;gap:2px;"><span class="pc-stars">★★★★★</span><span class="pc-cnt">(5,670)</span></div></div></div>
+          <div class="pc"><div class="pc-img">🌱<span class="pbadge">베스트</span></div><div class="pc-b"><div class="pc-brand">아누아</div><div class="pc-name">어성초 토너패드</div><div class="pc-price">18,000원</div><div class="pc-tags"><span class="pt pt-b">자극 없음</span><span class="pt pt-b">진정 효과</span></div><div style="display:flex;align-items:center;gap:2px;"><span class="pc-stars">★★★★★</span><span class="pc-cnt">(8,934)</span></div></div></div>
+        </div>
+      </div>
+      <div class="bnav">
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3l7 7" stroke="#1d6fce" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 8v8h4v-4h2v4h4V8" stroke="#1d6fce" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bni-l on">홈</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5" stroke="#adb5bd" stroke-width="1.3"/><path d="M13 13l4 4" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round"/></svg><span class="bni-l">검색</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="#adb5bd" stroke-width="1.3"/><rect x="11" y="3" width="6" height="6" rx="1.5" stroke="#adb5bd" stroke-width="1.3"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="#adb5bd" stroke-width="1.3"/><rect x="11" y="11" width="6" height="6" rx="1.5" stroke="#adb5bd" stroke-width="1.3"/></svg><span class="bni-l">카테고리</span></div>
+        <div class="bni" onclick="go(2)"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><path d="M4 4h12v10a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke="#adb5bd" stroke-width="1.3"/><path d="M8 4V2h4v2" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round"/></svg><span class="bni-l">에이전트</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.5" stroke="#adb5bd" stroke-width="1.3"/><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round"/></svg><span class="bni-l">마이</span></div>
+      </div>
+    </div>
+
+    <!-- SCREEN 2 -->
+    <div class="screen" id="s2">
+      <div class="sbar"><span class="stime">9:41</span><div style="display:flex;gap:5px;align-items:center;"><svg width="15" height="11" viewBox="0 0 16 11" fill="none"><rect x="0" y="4" width="3" height="7" rx="1" fill="#212529"/><rect x="4.5" y="2.5" width="3" height="8.5" rx="1" fill="#212529"/><rect x="9" y="0.5" width="3" height="10.5" rx="1" fill="#212529"/></svg><svg width="24" height="11" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#868e96" stroke-width=".8"/><rect x="22.5" y="3.5" width="2" height="5" rx="1" fill="#868e96"/><rect x="2" y="2" width="16" height="8" rx="2" fill="#212529"/></svg></div></div>
+      <div class="tbar"><span class="tlogo">enuri</span><div style="display:flex;gap:7px;"><div class="tico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="#495057" stroke-width="1.3"/><path d="M10 10l3 3" stroke="#495057" stroke-width="1.3" stroke-linecap="round"/></svg></div></div></div>
+      <div class="cats"><div class="cpill on">전체</div><div class="cpill">세럼/앰플</div><div class="cpill">토너</div><div class="cpill">크림</div><div class="cpill">선케어</div></div>
+      <div class="fbar">
+        <div class="ftrig" onclick="openSheet()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 2h10M3 5.5h6M5 9h2" stroke="#1971c2" stroke-width="1.2" stroke-linecap="round"/></svg>
+          필터 <span id="fc2">2</span>
+        </div>
+        <div id="chips2" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+      </div>
+      <div style="background:#f8f9fa;padding:10px 0 4px;">
+        <div class="ag-banner" onclick="go(3)">
+          <div class="ag-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.8" stroke="#fff" stroke-width="1.2"/><path d="M2 14c0-2.8 2.7-5 6-5s6 2.2 6 5" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><circle cx="12.5" cy="3.5" r="2" fill="#40c057"/></svg></div>
+          <div class="ag-txt"><div class="ag-t">AI 쇼핑에이전트에게 물어보세요</div><div class="ag-d">"복합성 피부에 산뜻한 세럼 추천해줘"</div></div>
+          <div class="ag-arr"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="q-section">
+          <div class="q-lbl">▸ 스와이프 질문 카드</div>
+          <div class="q-scroll" id="qs">
+            <div class="qcard" onclick="go(3)"><span class="qcard-ico">💧</span><div class="qcard-txt">복합성 피부에 산뜻하게 수분 채워주는 세럼</div><div class="q-arr"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="#4dabf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+            <div class="qcard" onclick="go(3)"><span class="qcard-ico">🌿</span><div class="qcard-txt">끈적이지 않으면서 여름에도 촉촉한 제품</div><div class="q-arr"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="#4dabf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+            <div class="qcard" onclick="go(3)"><span class="qcard-ico">🔴</span><div class="qcard-txt">예민한 피부도 자극 없이 쓸 수 있는 진정 세럼</div><div class="q-arr"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="#4dabf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+            <div class="qcard" onclick="go(3)"><span class="qcard-ico">✨</span><div class="qcard-txt">모공 커버되고 피부결 고르게 해주는 제품</div><div class="q-arr"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="#4dabf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+            <div class="qcard" onclick="go(3)"><span class="qcard-ico">💊</span><div class="qcard-txt">2만원대 가성비 히알루론산 세럼 추천</div><div class="q-arr"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="#4dabf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+            <div class="qcard" onclick="go(3)"><span class="qcard-ico">🌙</span><div class="qcard-txt">다음날 피부결 차이 느껴지는 나이트 세럼</div><div class="q-arr"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="#4dabf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+            <div style="flex-shrink:0;width:2px;"></div>
+          </div>
+          <div class="q-dots" id="qdots"><div class="qdot on"></div><div class="qdot"></div><div class="qdot"></div><div class="qdot"></div><div class="qdot"></div><div class="qdot"></div></div>
+        </div>
+        <div class="res-row" style="background:#f8f9fa;"><div><span class="res-n">612</span><span class="res-s"> 개 상품</span></div><span style="font-size:11px;color:#868e96;font-weight:500;">리뷰 많은순 ▾</span></div>
+        <div class="pgrid">
+          <div class="pc"><div class="pc-img">🌿<span class="pbadge">베스트</span></div><div class="pc-b"><div class="pc-brand">이니스프리</div><div class="pc-name">그린티 씨드 세럼</div><div class="pc-price">28,000원</div><div class="pc-tags"><span class="pt pt-b">흡수력 좋음</span></div></div></div>
+          <div class="pc"><div class="pc-img">🫧<span class="pbadge">베스트</span></div><div class="pc-b"><div class="pc-brand">토리든</div><div class="pc-name">다이브인 세럼</div><div class="pc-price">19,800원</div><div class="pc-tags"><span class="pt pt-b">흡수력 좋음</span></div></div></div>
+        </div>
+        <div class="float-wrap"><div class="float-btn" onclick="go(3)"><div class="float-dot"></div><span style="font-size:12px;font-weight:700;color:#fff;">AI 쇼핑에이전트</span><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+        <div style="height:10px;"></div>
+      </div>
+      <div class="bnav">
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3l7 7" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 8v8h4v-4h2v4h4V8" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bni-l">홈</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5" stroke="#adb5bd" stroke-width="1.3"/><path d="M13 13l4 4" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round"/></svg><span class="bni-l">검색</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="#1d6fce" stroke-width="1.3"/><rect x="11" y="3" width="6" height="6" rx="1.5" stroke="#1d6fce" stroke-width="1.3"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="#1d6fce" stroke-width="1.3"/><rect x="11" y="11" width="6" height="6" rx="1.5" stroke="#1d6fce" stroke-width="1.3"/></svg><span class="bni-l on">카테고리</span></div>
+        <div class="bni" onclick="go(3)"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><path d="M4 4h12v10a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke="#adb5bd" stroke-width="1.3"/><path d="M8 4V2h4v2" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round"/></svg><span class="bni-l">에이전트</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.5" stroke="#adb5bd" stroke-width="1.3"/><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round"/></svg><span class="bni-l">마이</span></div>
+      </div>
+    </div>
+
+    <!-- SCREEN 3 -->
+    <div class="screen" id="s3">
+      <div class="sbar"><span class="stime">9:41</span><div style="display:flex;gap:5px;"><svg width="15" height="11" viewBox="0 0 16 11" fill="none"><rect x="0" y="4" width="3" height="7" rx="1" fill="#212529"/><rect x="4.5" y="2.5" width="3" height="8.5" rx="1" fill="#212529"/><rect x="9" y="0.5" width="3" height="10.5" rx="1" fill="#212529"/></svg><svg width="24" height="11" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#868e96" stroke-width=".8"/><rect x="22.5" y="3.5" width="2" height="5" rx="1" fill="#868e96"/><rect x="2" y="2" width="16" height="8" rx="2" fill="#212529"/></svg></div></div>
+      <div class="tbar"><div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#40c057;"></div><span style="font-size:14px;font-weight:700;color:#212529;">AI 쇼핑에이전트</span></div><div class="tico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="4" r="1.2" fill="#495057"/><circle cx="8" cy="8" r="1.2" fill="#495057"/><circle cx="8" cy="12" r="1.2" fill="#495057"/></svg></div></div>
+      <div class="ctx-bar"><span class="ctx-lbl">현재 필터</span><span class="ctx-tag">흡수력 좋음</span><span class="ctx-tag">끈적임 제외</span><span class="ctx-tag">복합성</span></div>
+      <div class="chat-bg">
+        <div class="msg-row"><div class="av"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="#1d6fce" stroke-width="1.2"/><path d="M2 14c0-2.8 2.7-5 6-5s6 2.2 6 5" stroke="#1d6fce" stroke-width="1.2" stroke-linecap="round"/></svg></div><div class="bbl bot">안녕하세요! 피부 고민과 원하는 효과를 알려주시면 딱 맞는 스킨케어를 추천해드릴게요.</div></div>
+        <div class="msg-row u"><div class="bbl usr">복합성 피부인데 여름에 끈적이지 않으면서 수분감 오래 유지되는 세럼 찾고 있어요</div></div>
+        <div class="msg-row"><div class="av"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="#1d6fce" stroke-width="1.2"/><path d="M2 14c0-2.8 2.7-5 6-5s6 2.2 6 5" stroke="#1d6fce" stroke-width="1.2" stroke-linecap="round"/></svg></div><div class="tag-bbl"><div class="tag-bbl-lbl">이런 조건으로 찾아볼게요. 탭해서 조정하세요.</div><div class="ttags"><span class="tt tt-sel" onclick="toggleTag(this)">흡수력 좋음</span><span class="tt tt-sel" onclick="toggleTag(this)">산뜻한 마무리</span><span class="tt tt-sel" onclick="toggleTag(this)">촉촉하게 유지됨</span><span class="tt tt-exc" onclick="toggleTag(this)">끈적임 있음</span><span class="tt tt-exc" onclick="toggleTag(this)">무겁게 느껴짐</span><span class="tt tt-sel" onclick="toggleTag(this)">복합성 추천</span></div></div></div>
+        <div class="msg-row u"><div class="bbl usr">자극도 없으면 좋겠어요</div></div>
+        <div class="msg-row"><div class="av"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="#1d6fce" stroke-width="1.2"/><path d="M2 14c0-2.8 2.7-5 6-5s6 2.2 6 5" stroke="#1d6fce" stroke-width="1.2" stroke-linecap="round"/></svg></div><div style="display:flex;flex-direction:column;gap:7px;"><div class="bbl bot" style="max-width:230px;"><span style="color:#1d6fce;font-weight:700;">자극 없음</span> 추가했어요. 6,800개 리뷰 분석 결과 딱 맞는 상품 3가지예요.</div><div class="rec-wrap"><div class="rec-lbl">추천 상품</div><div class="rcard hl"><div class="rcard-img">🫧</div><div class="rcard-info"><div class="ri-brand">토리든</div><div class="ri-name">다이브인 히알루론산 세럼</div><div class="ri-price">19,800원</div><div class="ri-tags"><span class="ri-t">흡수력 좋음</span><span class="ri-t">자극 없음</span></div></div><span class="rank rank-1">1위</span></div><div class="rcard"><div class="rcard-img">🌿</div><div class="rcard-info"><div class="ri-brand">이니스프리</div><div class="ri-name">그린티 씨드 세럼</div><div class="ri-price">28,000원</div><div class="ri-tags"><span class="ri-t">촉촉함 유지</span><span class="ri-t">자극 없음</span></div></div><span class="rank rank-2">2위</span></div><div class="rcard"><div class="rcard-img">🌱</div><div class="rcard-info"><div class="ri-brand">아누아</div><div class="ri-name">어성초 77 토너패드</div><div class="ri-price">18,000원</div><div class="ri-tags"><span class="ri-t">진정 효과</span><span class="ri-t">자극 없음</span></div></div><span class="rank rank-3">3위</span></div></div></div></div>
+        <div style="padding-bottom:8px;"></div>
+      </div>
+      <div class="fups"><span class="fup">1위 상품 자세히 보기</span><span class="fup">향 있는 제품 빼줘</span><span class="fup">가격대 낮춰줘</span><span class="fup" onclick="go(1)" style="border-color:#dee2e6;background:#f1f3f5;color:#495057;">← 리스트로</span></div>
+      <div class="inp-bar"><div class="inp-f"><span class="inp-ph">추가 조건을 입력하세요</span></div><div class="inp-send"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 4l4 3-4 3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+      <div class="bnav">
+        <div class="bni" onclick="go(1)"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3l7 7" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 8v8h4v-4h2v4h4V8" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bni-l">홈</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5" stroke="#adb5bd" stroke-width="1.3"/><path d="M13 13l4 4" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round"/></svg><span class="bni-l">검색</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="#adb5bd" stroke-width="1.3"/><rect x="11" y="3" width="6" height="6" rx="1.5" stroke="#adb5bd" stroke-width="1.3"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="#adb5bd" stroke-width="1.3"/><rect x="11" y="11" width="6" height="6" rx="1.5" stroke="#adb5bd" stroke-width="1.3"/></svg><span class="bni-l">카테고리</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><path d="M4 4h12v10a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke="#1d6fce" stroke-width="1.3"/><path d="M8 4V2h4v2" stroke="#1d6fce" stroke-width="1.3" stroke-linecap="round"/><path d="M8 9h4M8 12h2" stroke="#1d6fce" stroke-width="1.2" stroke-linecap="round"/></svg><span class="bni-l on">에이전트</span></div>
+        <div class="bni"><svg width="19" height="19" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.5" stroke="#adb5bd" stroke-width="1.3"/><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="#adb5bd" stroke-width="1.3" stroke-linecap="round"/></svg><span class="bni-l">마이</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER SHEET -->
+  <div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+    <div class="sheet" id="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-title">리뷰 태그 필터</span>
+        <span class="sheet-reset" onclick="resetFilters()">전체 초기화</span>
+      </div>
+      <div class="legend-row">
+        <div class="leg"><div class="leg-dot" style="background:#4dabf7;"></div>포함</div>
+        <div class="leg"><div class="leg-dot" style="background:#f783ac;"></div>제외</div>
+        <div class="leg"><div class="leg-dot" style="background:#8ce99a;"></div>속성</div>
+      </div>
+      <div class="sheet-sec">
+        <div class="sheet-sec-label">텍스처 &amp; 흡수</div>
+        <div class="stags">
+          <span class="stag on-pos" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>흡수력 좋음</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>산뜻한 마무리</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>촉촉하게 유지됨</span>
+          <span class="stag on-exc" data-t="neg" onclick="togStag(this)"><span class="sd" style="background:#f783ac;"></span>끈적임 있음</span>
+          <span class="stag on-exc" data-t="neg" onclick="togStag(this)"><span class="sd" style="background:#f783ac;"></span>무겁게 느껴짐</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>피부 밀착감 좋음</span>
+        </div>
+      </div>
+      <div class="sheet-div"></div>
+      <div class="sheet-sec">
+        <div class="sheet-sec-label">피부 반응</div>
+        <div class="stags">
+          <span class="stag on-pos" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>자극 없음</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>진정 효과 있음</span>
+          <span class="stag on-exc" data-t="neg" onclick="togStag(this)"><span class="sd" style="background:#f783ac;"></span>트러블 유발</span>
+          <span class="stag on-exc" data-t="neg" onclick="togStag(this)"><span class="sd" style="background:#f783ac;"></span>따가움 있음</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>민감성에도 OK</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>붉음증 완화</span>
+        </div>
+      </div>
+      <div class="sheet-div"></div>
+      <div class="sheet-sec">
+        <div class="sheet-sec-label">효과 &amp; 결과</div>
+        <div class="stags">
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>모공 커버</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>피부톤 정리</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>탄력 느껴짐</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>다음날 피부결 개선</span>
+          <span class="stag on-exc" data-t="neg" onclick="togStag(this)"><span class="sd" style="background:#f783ac;"></span>효과 미미함</span>
+        </div>
+      </div>
+      <div class="sheet-div"></div>
+      <div class="sheet-sec">
+        <div class="sheet-sec-label">사용감 &amp; 편의성</div>
+        <div class="stags">
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>냄새 좋음</span>
+          <span class="stag on-exc" data-t="neg" onclick="togStag(this)"><span class="sd" style="background:#f783ac;"></span>향이 강함</span>
+          <span class="stag" data-t="neu" onclick="togStag(this)"><span class="sd" style="background:#8ce99a;"></span>소량으로 충분</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>레이어링 잘 됨</span>
+          <span class="stag on-exc" data-t="neg" onclick="togStag(this)"><span class="sd" style="background:#f783ac;"></span>용기 위생 아쉬움</span>
+        </div>
+      </div>
+      <div class="sheet-div"></div>
+      <div class="sheet-sec">
+        <div class="sheet-sec-label">피부 타입</div>
+        <div class="stags">
+          <span class="stag" data-t="neu" onclick="togStag(this)"><span class="sd" style="background:#8ce99a;"></span>지성 추천</span>
+          <span class="stag" data-t="neu" onclick="togStag(this)"><span class="sd" style="background:#8ce99a;"></span>건성 추천</span>
+          <span class="stag on-neu" data-t="neu" onclick="togStag(this)"><span class="sd" style="background:#8ce99a;"></span>복합성 추천</span>
+          <span class="stag" data-t="pos" onclick="togStag(this)"><span class="sd" style="background:#4dabf7;"></span>모든 타입 OK</span>
+        </div>
+      </div>
+      <div style="padding:0 17px;margin-top:16px;">
+        <div class="apply-btn" onclick="applyFilters()"><span id="apply-label">612개 상품 보기</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="hint">필터 버튼 탭 → 시트 오픈 &nbsp;|&nbsp; 배너 / 카드 탭 → 화면 전환</p>
+
+<script>
+const BASE = 2847;
+
+function go(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('s'+i).classList.toggle('on', i===n);
+    document.getElementById('nb'+i).classList.toggle('on', i===n);
+  });
+}
+
+function openSheet(){
+  document.getElementById('overlay').classList.add('on');
+  updateApplyLabel();
+}
+
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('on');
+}
+
+function handleOverlayClick(e){
+  if(e.target === document.getElementById('overlay')) closeSheet();
+}
+
+function togStag(el){
+  const t = el.dataset.t;
+  if(t === 'neg') el.classList.toggle('on-exc');
+  else if(t === 'neu') el.classList.toggle('on-neu');
+  else el.classList.toggle('on-pos');
+  updateApplyLabel();
+}
+
+function resetFilters(){
+  document.querySelectorAll('.stag').forEach(s => s.classList.remove('on-pos','on-exc','on-neu'));
+  updateApplyLabel();
+}
+
+function updateApplyLabel(){
+  const pos = document.querySelectorAll('.stag.on-pos').length;
+  const exc = document.querySelectorAll('.stag.on-exc').length;
+  const neu = document.querySelectorAll('.stag.on-neu').length;
+  let count = BASE;
+  for(let i=0;i<pos;i++) count = Math.round(count * 0.72);
+  for(let i=0;i<exc;i++) count = Math.round(count * 0.80);
+  for(let i=0;i<neu;i++) count = Math.round(count * 0.86);
+  count = Math.max(count, 18);
+  document.getElementById('apply-label').textContent = count.toLocaleString() + '개 상품 보기';
+  return {pos, exc, neu, count};
+}
+
+function applyFilters(){
+  const {pos, exc, neu, count} = updateApplyLabel();
+  const total = pos + exc + neu;
+  const posL = [...document.querySelectorAll('.stag.on-pos')].map(s => s.textContent.trim());
+  const excL = [...document.querySelectorAll('.stag.on-exc')].map(s => s.textContent.trim());
+
+  ['fc1','fc2'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = total;
+  });
+
+  ['chips1','chips2'].forEach(id => {
+    const c = document.getElementById(id);
+    if(!c) return;
+    c.innerHTML = '';
+    posL.forEach(l => {
+      const d = document.createElement('div');
+      d.className = 'fchip fc-pos';
+      d.textContent = l + ' ×';
+      c.appendChild(d);
+    });
+    excL.forEach(l => {
+      const d = document.createElement('div');
+      d.className = 'fchip fc-exc';
+      d.textContent = l + ' ×';
+      c.appendChild(d);
+    });
+  });
+
+  const rc = document.getElementById('rc1');
+  if(rc) rc.textContent = count.toLocaleString();
+  closeSheet();
+}
+
+const qs = document.getElementById('qs');
+const dots = document.querySelectorAll('#qdots .qdot');
+if(qs){
+  qs.addEventListener('scroll', () => {
+    const w = (qs.querySelector('.qcard')||{offsetWidth:135}).offsetWidth + 7;
+    const idx = Math.min(Math.round(qs.scrollLeft / w), dots.length - 1);
+    dots.forEach((d,i) => d.classList.toggle('on', i===idx));
+  });
+}
+
+function toggleTag(el){
+  if(el.classList.contains('tt-sel')) el.classList.remove('tt-sel');
+  else if(el.classList.contains('tt-exc')) el.classList.remove('tt-exc');
+  else el.classList.add('tt-sel');
+}
+
+applyFilters();
+</script>
+</body>
+</html>
